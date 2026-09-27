@@ -35,3 +35,15 @@
 - 利用 / Reuse: 以后以本条和 11:48 条目为当前实现依据。
 - 限制 / Limits: 真实 GoDaddy API 仍未运行。
 - 下一步 / Next: 完成 Git 和公开仓库交付。
+
+## 2026-09-27T11:55:00+08:00 — 公开仓库交付
+
+- 状态 / Status: 完成
+- 目标 / Goal: 创建并推送公开 GitHub 仓库，交付可运行的 Django + React GoDaddy DNS 管理 MVP。
+- 读取 / Read: `git rev-parse HEAD` — 本地提交 `04924952f6599faef38469d838123c0fabc17565`；`git ls-remote origin refs/heads/main` — 远程 `main` SHA 一致；`gh repo view shiyi-log/godaddy-dns-manager` — 仓库可见性为 `PUBLIC`。
+- 修改 / Write: `https://github.com/shiyi-log/godaddy-dns-manager` — 创建公开仓库并推送 `main`；本地 Git 已设置 `origin`。远程仓库写入不可由代码回滚，但可通过后续 Git 提交修正。
+- 时间逻辑 / Time logic: 本条时间为 `2026-09-27T11:55:00+08:00`；代码中的活动时间使用 UTC ISO 8601；DNS TTL 使用秒数。
+- 验证 / Verification: `uv run pytest tests -q` → 9 passed；`uv run python backend/manage.py check` → no issues；`npm run build --prefix frontend` → Vite 7.3.6 build succeeded；本地 Django API smoke → health 200、domains 200、records 200、create 201、update 200、delete 204；工作区提交后与 `origin/main` 同步。
+- 利用 / Reuse: 克隆公开仓库后执行 `uv sync` 和 `npm install` 即可复现；使用 `.env.example` 切换演示/真实模式；如需撤销初始交付，可回退到无代码状态或继续提交修复。
+- 限制 / Limits: 未配置真实 GoDaddy PAT，因此真实账号和生产 DNS 变更仍为未运行；演示写入是内存状态，服务重启后恢复；GitHub Actions、部署和生产 DNS 传播未实现。
+- 下一步 / Next: 用户配置 PAT 后执行真实 GoDaddy 读取验收，再决定是否加入登录、持久化活动日志和部署流水线。
