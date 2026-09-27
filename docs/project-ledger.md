@@ -60,6 +60,18 @@
 - 限制 / Limits: 本次不加入部署、发布、真实 GoDaddy PAT、生产 DNS 或外部服务写入。
 - 下一步 / Next: 创建工作流并运行本地等价检查，提交并推送后读取真实 CI run 状态。
 
+## 2026-09-27T12:08:00+08:00 — CI 真实运行完成
+
+- 状态 / Status: 完成
+- 目标 / Goal: 证明新增 GitHub Actions 工作流在公开仓库的真实 runner 上可执行。
+- 读取 / Read: `gh run list --workflow ci.yml` — 找到 run `36293376206`；`gh run view 36293376206` — `headSha=874b09b54cd1fa504cb8aed1d8920064c73936ab`，整体 conclusion 为 `success`。
+- 修改 / Write: 无新增代码；读取 GitHub Actions 的真实运行结果。
+- 时间逻辑 / Time logic: GitHub run 时间使用 UTC；并发取消策略按 workflow/ref 生效；本次 run 仅包含锁定依赖安装和静态/本地测试，不执行 GoDaddy 外部写操作。
+- 验证 / Verification: `Django / pytest` job → success；`React / Vite` job → success；本地 `uv lock --check`、Django check、pytest 9/9、`npm ci` 和 Vite build 均成功。
+- 利用 / Reuse: 后续 pull request、`main` push 和手动 dispatch 使用同一工作流；run 地址为 `https://github.com/shiyi-log/godaddy-dns-manager/actions/runs/36293376206`。
+- 限制 / Limits: CI 没有真实 GoDaddy PAT，未验证真实账户、生产 DNS、部署和 DNS 传播；Actions 只验证构建和测试路径。
+- 下一步 / Next: 用户配置 GoDaddy PAT 后，再单独运行真实 provider 读取验收；CI 工作流当前可继续复用。
+
 ## 2026-09-27T12:07:22+08:00 — 开发文档设计确认
 
 - 状态 / Status: 进行中
