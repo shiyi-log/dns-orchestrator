@@ -59,3 +59,16 @@
 - 利用 / Reuse: 后续 PR 和 main push 自动复用同一工作流；`uv run ...` 和 `npm run build --prefix frontend` 可本地复现。
 - 限制 / Limits: 本次不加入部署、发布、真实 GoDaddy PAT、生产 DNS 或外部服务写入。
 - 下一步 / Next: 创建工作流并运行本地等价检查，提交并推送后读取真实 CI run 状态。
+
+## 2026-09-27T12:07:22+08:00 — 开发文档设计确认
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 为当前 Django + React GoDaddy DNS Manager 补充一份面向开发者和维护者的开发文档。
+- 分支与修订 / Branch and revision: `main`；`874b09b54cd1fa504cb8aed1d8920064c73936ab`。
+- 读取 / Read: `README.md` — 已有快速启动、真实 PAT、API 路由和测试说明；`docs/superpowers/specs/2026-09-27-godaddy-dns-manager-design.md` — 已有产品架构和 MVP 边界；`docs/superpowers/plans/2026-09-27-godaddy-dns-manager.md` — 已有实现任务和验证边界；`backend/app/*`、`backend/dns_api/*`、`backend/config/*` — 当前配置、模型、GoDaddy 客户端、服务层和 REST 路由；`frontend/src/*` — 当前 API 封装、页面状态和组件边界；`tests/*` — 当前演示、模型、HTTP 客户端和 API 测试；`.github/workflows/ci.yml` — 当前 CI job、锁定依赖和触发器；`.env.example`、`docker-compose.yml`、`pyproject.toml`、`frontend/package.json` — 本地启动和依赖入口。
+- 修改 / Write: `docs/superpowers/specs/2026-09-27-development-docs-design.md` — 固化开发文档章节、事实来源、范围和验收标准；可通过 Git 回滚：是。`docs/project-ledger.md` — 追加本条记录；可通过 Git 回滚：是。
+- 时间逻辑 / Time logic: 本条记录使用系统时间 `2026-09-27T12:07:22+08:00`；开发文档将保留代码实际规则：活动时间为 UTC ISO 8601，DNS TTL 为秒数整数；不新增时间计算。
+- 验证 / Verification: 已完成结构和范围自审：无业务代码修改、无真实 PAT、无生产 DNS 写入；开发文档正文尚未创建，后续命令验证待运行。
+- 利用 / Reuse: 后续开发文档以本设计说明为章节基线；新增接口或配置时可沿用“事实来源 → API/模块 → 测试 → 限制”写法。
+- 限制 / Limits: 真实 GoDaddy provider、浏览器完整流程、部署和 GitHub Actions 运行状态不由本设计说明证明。
+- 下一步 / Next: 用户审阅本设计说明后，创建 `docs/DEVELOPMENT.md` 并同步 README 入口。
