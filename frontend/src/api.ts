@@ -1,4 +1,4 @@
-import type { ActivityEntry, DNSRecord, DomainSummary, RecordDraft } from './types'
+import type { AccountCreate, AccountUpdate, ActivityEntry, DNSRecord, DomainSummary, ProviderAccountSummary, ProviderMetadata, RecordDraft, Zone } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
@@ -16,6 +16,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  listProviders: () => request<ProviderMetadata[]>('/providers'),
+  listAccounts: () => request<ProviderAccountSummary[]>('/accounts'),
+  createAccount: (payload: AccountCreate) => request<ProviderAccountSummary>('/accounts', { method: 'POST', body: JSON.stringify(payload) }),
+  updateAccount: (id: string, payload: AccountUpdate) => request<ProviderAccountSummary>(`/accounts/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  deleteAccount: (id: string) => request<void>(`/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  verifyAccount: (id: string) => request<ProviderAccountSummary>(`/accounts/${encodeURIComponent(id)}/verify`, { method: 'POST' }),
+  setDefaultAccount: (id: string) => request<ProviderAccountSummary>(`/accounts/${encodeURIComponent(id)}/set-default`, { method: 'POST' }),
+  listZones: (accountId: string) => request<Zone[]>(`/accounts/${encodeURIComponent(accountId)}/zones`),
+  listAccountRecords: (accountId: string, zone: string) => request<DNSRecord[]>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records`),
+  createAccountRecord: (accountId: string, zone: string, payload: RecordDraft) => request<DNSRecord>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records`, { method: 'POST', body: JSON.stringify({ type: payload.type, name: payload.name, content: payload.data, ttl: payload.ttl, priority: payload.priority }) }),
+  updateAccountRecord: (accountId: string, zone: string, id: string, payload: RecordDraft) => request<DNSRecord>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ type: payload.type, name: payload.name, content: payload.data, ttl: payload.ttl, priority: payload.priority }) }),
+  deleteAccountRecord: (accountId: string, zone: string, id: string) => request<void>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   listDomains: () => request<DomainSummary[]>('/domains'),
   listRecords: (domain: string) => request<DNSRecord[]>(`/domains/${encodeURIComponent(domain)}/records`),
   listActivity: () => request<ActivityEntry[]>('/activity'),

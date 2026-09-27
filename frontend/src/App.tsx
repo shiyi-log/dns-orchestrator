@@ -3,7 +3,9 @@ import { api } from './api'
 import Sidebar from './components/Sidebar'
 import RecordDrawer from './components/RecordDrawer'
 import RecordTable from './components/RecordTable'
-import type { DNSRecord, DomainSummary, RecordDraft } from './types'
+import AccountDrawer from './components/AccountDrawer'
+import AccountTable from './components/AccountTable'
+import type { DNSRecord, DomainSummary, ProviderAccountSummary, ProviderMetadata, RecordDraft, Zone } from './types'
 
 export default function App() {
   const [domains, setDomains] = useState<DomainSummary[]>([])
@@ -16,11 +18,35 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState<DNSRecord | null>(null)
+  const [accounts, setAccounts] = useState<ProviderAccountSummary[]>([])
+  const [providers, setProviders] = useState<ProviderMetadata[]>([])
+  const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [zones, setZones] = useState<Zone[]>([])
+  const [selectedZone, setSelectedZone] = useState('')
+  const [accountDrawerOpen, setAccountDrawerOpen] = useState(false)
+  const [accountView, setAccountView] = useState(false)
 
   const loadDomains = async () => {
     const result = await api.listDomains()
     setDomains(result)
     if (!selectedDomain && result[0]) setSelectedDomain(result[0].domain)
+    return result
+  }
+
+  const loadAccounts = async () => {
+    const [accountResult, providerResult] = await Promise.all([api.listAccounts(), api.listProviders()])
+    setAccounts(accountResult)
+    setProviders(providerResult)
+    const next = accountResult.find((account) => account.is_default) ?? accountResult[0]
+    if (!selectedAccountId && next) setSelectedAccountId(next.id)
+    return accountResult
+  }
+
+  const loadAccountZones = async (accountId: string) => {
+    if (!accountId) return
+    const result = await api.listZones(accountId)
+    setZones(result)
+    if (!selectedZone && result[0]) setSelectedZone(result[0].name)
     return result
   }
 
@@ -38,10 +64,30 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadDomains()
-      .then((result) => result[0] && loadRecords(result[0].domain))
+    loadAccounts()
+      .then((result) => {
+        const next = result.find((account) => account.is_default) ?? result[0]
+        if (next) return loadAccountZones(next.id).then(() => undefined)
+        return loadDomains().then((domains) => { if (domains[0]) return loadRecords(domains[0].domain) })
+      })
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : '读取域名失败'))
   }, [])
+
+  useEffect(() => {
+    if (selectedAccountId) {
+      setSelectedZone('')
+      setZones([])
+      setRecords([])
+      loadAccountZones(selectedAccountId).catch((loadError) => setError(loadError instanceof Error ? loadError.message : '读取 Zone 失败'))
+    }
+  }, [selectedAccountId])
+
+  useEffect(() => {
+    if (selectedAccountId && selectedZone) {
+      setLoading(true)
+      api.listAccountRecords(selectedAccountId, selectedZone).then(setRecords).catch((loadError) => setError(loadError instanceof Error ? loadError.message : '读取解析记录失败')).finally(() => setLoading(false))
+    }
+  }, [selectedAccountId, selectedZone])
 
   useEffect(() => {
     if (selectedDomain) loadRecords(selectedDomain)
@@ -58,7 +104,13 @@ export default function App() {
   }
 
   const saveRecord = async (draft: RecordDraft) => {
-    if (editingRecord) {
+    if (selectedAccountId && selectedZone) {
+      if (editingRecord) await api.updateAccountRecord(selectedAccountId, selectedZone, editingRecord.id, draft)
+      else await api.createAccountRecord(selectedAccountId, selectedZone, draft)
+      setNotice(editingRecord ? '解析记录已更新' : '解析记录已新增')
+      const refreshed = await api.listAccountRecords(selectedAccountId, selectedZone)
+      setRecords(refreshed)
+    } else if (editingRecord) {
       await api.updateRecord(selectedDomain, editingRecord.id, draft)
       setNotice('解析记录已更新')
     } else {
@@ -72,7 +124,8 @@ export default function App() {
   const deleteRecord = async (record: DNSRecord) => {
     if (!window.confirm(`确定删除 ${record.type} ${record.name} → ${record.data} 吗？`)) return
     try {
-      await api.deleteRecord(selectedDomain, record.id)
+      if (selectedAccountId && selectedZone) await api.deleteAccountRecord(selectedAccountId, selectedZone, record.id)
+      else await api.deleteRecord(selectedDomain, record.id)
       setNotice('解析记录已删除')
       await Promise.all([loadRecords(selectedDomain), loadDomains()])
       window.setTimeout(() => setNotice(''), 2600)
@@ -83,28 +136,47 @@ export default function App() {
 
   const selectedSummary = domains.find((domain) => domain.domain === selectedDomain)
 
+  const refreshAccounts = async () => {
+    const result = await api.listAccounts()
+    setAccounts(result)
+    if (!selectedAccountId && result[0]) setSelectedAccountId(result[0].id)
+  }
+
+  const createAccount = async (payload: Parameters<typeof api.createAccount>[0]) => {
+    await api.createAccount(payload)
+    await refreshAccounts()
+    setNotice('账号已验证并保存')
+    window.setTimeout(() => setNotice(''), 2600)
+  }
+
+  const verifyAccount = async (account: ProviderAccountSummary) => { setAccounts((items) => items); const updated = await api.verifyAccount(account.id); setAccounts((items) => items.map((item) => item.id === updated.id ? updated : item)) }
+  const setDefaultAccount = async (account: ProviderAccountSummary) => { const updated = await api.setDefaultAccount(account.id); setAccounts((items) => items.map((item) => ({ ...item, is_default: item.id === updated.id }))); setSelectedAccountId(updated.id) }
+  const deleteAccount = async (account: ProviderAccountSummary) => { if (!window.confirm(`确定删除本地账号“${account.display_name}”吗？不会删除云端 DNS 数据。`)) return; await api.deleteAccount(account.id); const result = await api.listAccounts(); setAccounts(result); if (selectedAccountId === account.id) setSelectedAccountId(result[0]?.id ?? '') }
+
   return (
     <div className="app-shell">
-      <Sidebar domains={domains} selectedDomain={selectedDomain} onSelectDomain={setSelectedDomain} />
+      <Sidebar domains={domains} selectedDomain={selectedDomain} onSelectDomain={setSelectedDomain} accounts={accounts} selectedAccountId={selectedAccountId} onSelectAccount={setSelectedAccountId} onManageAccounts={() => setAccountView(true)} />
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumbs"><span>解析记录</span><span>/</span><strong>DNS 管理</strong></div>
           <div className="account"><span>演示账户</span><span className="avatar">S</span></div>
         </header>
 
-        <section className="page-heading">
+        {accountView ? <section className="page-heading"><div><h1>账号管理</h1><p>管理 GoDaddy 连接，并为未来的多云 DNS 适配器预留统一入口。</p></div><button className="primary-button" type="button" onClick={() => setAccountDrawerOpen(true)}>＋ 添加账号</button></section> : <section className="page-heading">
           <div><h1>DNS 解析</h1><p>集中管理域名的 A、CNAME、MX、TXT 和其他解析记录。</p></div>
           <button className="primary-button" type="button" onClick={openCreate}>＋ 新增记录</button>
-        </section>
+        </section>}
 
-        <section className="stats-grid">
+        {accountView ? <section className="records-card account-view-card"><AccountTable accounts={accounts} providers={providers} onVerify={verifyAccount} onSetDefault={setDefaultAccount} onDelete={deleteAccount} /></section> : null}
+
+        {!accountView && <section className="stats-grid">
           <div className="stat-card"><span>已连接域名</span><strong>{domains.length}</strong></div>
           <div className="stat-card"><span>解析记录</span><strong>{records.length}</strong></div>
           <div className="stat-card"><span>同步状态</span><strong className="green">正常</strong></div>
           <div className="stat-card"><span>最近同步</span><strong>刚刚</strong></div>
-        </section>
+        </section>}
 
-        <section className="records-card">
+        {!accountView && <section className="records-card">
           <div className="toolbar">
             <div className="toolbar-left">
               <select className="domain-select" value={selectedDomain} onChange={(event) => setSelectedDomain(event.target.value)} aria-label="选择域名">
@@ -123,9 +195,10 @@ export default function App() {
           {notice && <div className="alert success">{notice}</div>}
           {loading ? <div className="loading">正在读取 {selectedDomain || '域名'} 的解析记录…</div> : <RecordTable records={filteredRecords} onEdit={(record) => { setEditingRecord(record); setDrawerOpen(true) }} onDelete={deleteRecord} />}
           <div className="table-footer"><span>显示 <strong>{filteredRecords.length}</strong> / 共 {records.length} 条记录</span><span>数据来自 {selectedSummary?.domain ?? 'GoDaddy'}</span></div>
-        </section>
+        </section>}
       </main>
       <RecordDrawer open={drawerOpen} record={editingRecord} onClose={() => setDrawerOpen(false)} onSubmit={saveRecord} />
+      <AccountDrawer open={accountDrawerOpen} providers={providers} onClose={() => setAccountDrawerOpen(false)} onSubmit={createAccount} />
     </div>
   )
 }

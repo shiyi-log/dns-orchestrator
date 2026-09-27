@@ -14,6 +14,16 @@ button { cursor: pointer; }
 .brand { padding: 0 12px 25px; color: #fff; font-size: 18px; font-weight: 850; letter-spacing: -.04em; }
 .brand span { color: #7ea6ff; }
 .brand small { color: #91a4c4; font-size: 11px; font-weight: 700; }
+.account-switcher { margin: 0 4px 18px; padding: 12px; border: 1px solid rgba(160,185,236,.2); border-radius: 10px; background: rgba(97,133,212,.12); }
+.account-switcher-label { margin-bottom: 6px; color: #91a4c4; font-size: 10px; }
+.account-switcher select { width: 100%; border: 0; background: transparent; color: #fff; font-size: 12px; font-weight: 800; outline: none; }
+.account-switcher option { color: #18253d; }
+.account-switcher-status { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: #9fcfbf; font-size: 10px; }
+.account-switcher-status span { width: 6px; height: 6px; border-radius: 50%; background: #46c294; }
+.account-switcher-status.status-error { color: #f0b4b4; }
+.account-switcher-status.status-error span { background: #d35b61; }
+.account-manage-link { margin-top: 8px; padding: 0; border: 0; background: transparent; color: #aac0ef; font-size: 10px; }
+.account-manage-link:hover { color: #fff; text-decoration: underline; }
 .nav-label { padding: 0 12px 8px; color: #8090aa; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .nav-label-system { margin-top: 24px; }
 .nav-item { width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 12px; margin: 4px 0; border: 0; border-radius: 8px; background: transparent; color: #cbd5e6; text-align: left; font-size: 13px; }
@@ -99,6 +109,13 @@ tbody tr:last-child td { border-bottom: 0; }
 .drawer-summary { margin: 10px 0 22px; padding: 12px; border: 1px solid #d5e2ff; border-radius: 8px; background: #f4f7ff; color: #6880af; font-size: 11px; }
 .drawer-summary strong { display: block; margin-top: 5px; color: #2463eb; font-size: 12px; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 9px; }
+.account-view-card { padding: 0; }
+.account-table-shell { overflow-x: auto; }
+.account-table-shell table { min-width: 900px; }
+.text-button { padding: 3px 0; border: 0; background: transparent; color: #2463eb; font-size: 11px; font-weight: 750; }
+.text-button:hover { text-decoration: underline; }
+.danger-text { color: #c84f57; }
+.default-mark { display: inline-flex; padding: 4px 7px; border-radius: 5px; background: #edf9f4; color: #0f9f72; font-size: 10px; font-weight: 800; }
 @media (max-width: 900px) {
   .sidebar { width: 70px; flex-basis: 70px; padding: 20px 8px; }
   .brand { padding-left: 8px; font-size: 0; }

@@ -1,12 +1,18 @@
 import type { DomainSummary } from '../types'
+import type { ProviderAccountSummary } from '../types'
+import AccountSwitcher from './AccountSwitcher'
 
 interface SidebarProps {
   domains: DomainSummary[]
   selectedDomain: string
   onSelectDomain: (domain: string) => void
+  accounts: ProviderAccountSummary[]
+  selectedAccountId: string
+  onSelectAccount: (id: string) => void
+  onManageAccounts: () => void
 }
 
-export default function Sidebar({ domains, selectedDomain, onSelectDomain }: SidebarProps) {
+export default function Sidebar({ domains, selectedDomain, onSelectDomain, accounts, selectedAccountId, onSelectAccount, onManageAccounts }: SidebarProps) {
   const currentDomain = domains.find((domain) => domain.domain === selectedDomain)
 
   return (
@@ -14,6 +20,7 @@ export default function Sidebar({ domains, selectedDomain, onSelectDomain }: Sid
       <div className="brand">
         go<span>daddy</span> <small>/ dns</small>
       </div>
+      <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={onSelectAccount} onManage={onManageAccounts} />
       <div className="nav-label">管理</div>
       <button className="nav-item" type="button"><span className="nav-icon">⌂</span><span>概览</span></button>
       <button className="nav-item" type="button"><span className="nav-icon">◇</span><span>域名</span><span className="nav-meta">{domains.length}</span></button>

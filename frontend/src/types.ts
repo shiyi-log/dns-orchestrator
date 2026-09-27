@@ -36,3 +36,42 @@ export interface ActivityEntry {
   status: 'success' | 'error'
   created_at: string
 }
+
+export type ProviderId = 'godaddy' | 'cloudflare' | 'aliyun' | 'tencent'
+
+export interface ProviderMetadata {
+  id: ProviderId
+  name: string
+  implemented: boolean
+  credential_fields: string[]
+}
+
+export interface ProviderAccountSummary {
+  id: string
+  provider: ProviderId
+  display_name: string
+  status: 'unknown' | 'active' | 'error' | 'disabled'
+  is_default: boolean
+  zone_count: number
+  last_verified_at?: string | null
+  last_error?: string | null
+}
+
+export interface AccountCreate {
+  provider: ProviderId
+  display_name: string
+  credential: Record<string, string>
+}
+
+export interface AccountUpdate {
+  display_name?: string
+  is_enabled?: boolean
+  credential?: Record<string, string>
+}
+
+export interface Zone {
+  id: string
+  name: string
+  status: string
+  record_count: number
+}
