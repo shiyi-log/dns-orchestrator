@@ -1,5 +1,7 @@
 # GoDaddy DNS Manager
 
+[![CI](https://github.com/shiyi-log/godaddy-dns-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/shiyi-log/godaddy-dns-manager/actions/workflows/ci.yml)
+
 一个使用 Django、Django REST Framework、React 和 Vite 构建的 GoDaddy 域名解析可视化管理台。
 
 当前版本聚焦 DNS 记录管理：
@@ -100,6 +102,8 @@ npm run build --prefix frontend
 ```
 
 当前验证覆盖本地演示模式和模拟 GoDaddy HTTP 响应；没有配置真实 PAT 时，不会宣称真实 GoDaddy 账号或生产域名已经验收。
+
+GitHub Actions 会在 pull request、`main` 分支推送和手动 dispatch 时运行同样的后端检查、pytest 和前端构建。CI 使用 `uv.lock` 和 `frontend/package-lock.json` 的锁定依赖，并缓存两套依赖目录。
 
 ## 参考
 

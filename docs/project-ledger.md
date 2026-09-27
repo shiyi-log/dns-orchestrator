@@ -47,3 +47,15 @@
 - 利用 / Reuse: 克隆公开仓库后执行 `uv sync` 和 `npm install` 即可复现；使用 `.env.example` 切换演示/真实模式；如需撤销初始交付，可回退到无代码状态或继续提交修复。
 - 限制 / Limits: 未配置真实 GoDaddy PAT，因此真实账号和生产 DNS 变更仍为未运行；演示写入是内存状态，服务重启后恢复；GitHub Actions、部署和生产 DNS 传播未实现。
 - 下一步 / Next: 用户配置 PAT 后执行真实 GoDaddy 读取验收，再决定是否加入登录、持久化活动日志和部署流水线。
+
+## 2026-09-27T12:05:00+08:00 — 添加 GitHub Actions CI
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 为公开仓库添加可重复的 GitHub Actions CI，覆盖 Django 检查、pytest、前端依赖安装和 Vite 构建。
+- 读取 / Read: `.github/workflows` — 目录不存在；`pyproject.toml`、`uv.lock` — Python 依赖和锁文件入口；`frontend/package.json`、`frontend/package-lock.json` — Node 依赖和构建命令；`README.md` — 当前启动和验证命令；GitHub/uv 官方 Action 文档 — 核对 checkout、setup-node、setup-uv 的工作流用法。
+- 修改 / Write: `.github/workflows/ci.yml` — 新增 pull request、main push 和手动 dispatch 的 CI；`README.md` — 增加 CI 状态徽章和本地复现命令。均可通过 Git 回滚。
+- 时间逻辑 / Time logic: CI 使用 GitHub Actions runner 的系统时间；并发组按 workflow 和 Git ref 标识，新的同 ref 运行取消旧运行；依赖缓存按锁文件哈希失效。
+- 验证 / Verification: 待完成本地 YAML 解析、锁定依赖安装、Django check、pytest 和 frontend build；真实 GitHub Actions 运行需要推送后取得 run ID，不能用本地结果替代。
+- 利用 / Reuse: 后续 PR 和 main push 自动复用同一工作流；`uv run ...` 和 `npm run build --prefix frontend` 可本地复现。
+- 限制 / Limits: 本次不加入部署、发布、真实 GoDaddy PAT、生产 DNS 或外部服务写入。
+- 下一步 / Next: 创建工作流并运行本地等价检查，提交并推送后读取真实 CI run 状态。
