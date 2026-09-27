@@ -132,3 +132,15 @@
 - 利用 / Reuse: 设置 `ACCOUNT_ENCRYPTION_KEY` 后可持久化多个 GoDaddy 账号；旧 `/api/domains*` 路由使用默认账号；ProviderFactory 可继续扩展 Cloudflare、阿里云、腾讯云。
 - 限制 / Limits: 未配置真实 PAT，未运行真实 GoDaddy 多账号 provider；后续提供商没有真实 API；当前本机单 Workspace，不含登录/团队权限；`.idea/` 未跟踪且未审计为交付内容。
 - 下一步 / Next: 运行 migration、secret scan、Django/Vite 本地服务和浏览器账号切换，提交推送并读取 CI run。
+
+## 2026-09-27T16:10:00+08:00 — 多账号第一阶段交付验证
+
+- 状态 / Status: 完成
+- 目标 / Goal: 完成并验证 GoDaddy 多账号第一阶段，实现统一 Provider 边界、账号范围 DNS API、账号管理 UI 和 CI 交付。
+- 读取 / Read: `gh run view 36305045244` — 真实 GitHub Actions run；浏览器 `http://127.0.0.1:5173/` — 账号切换器、DNS 表格、账号管理表格和添加账号抽屉；Django `/api/providers`、`/api/accounts`、`/api/domains`、`/api/domains/example.com/records` — 当前演示数据和支持矩阵。
+- 修改 / Write: `README.md`、`.env.example`、`.github/workflows/ci.yml` — 多账号配置、迁移、API 和 CI 说明；`backend/dns_api/account_service.py`、`frontend/src/App.tsx`、`frontend/src/api.ts`、`frontend/src/components/Sidebar.tsx` — 演示账号状态修复、账号范围数据映射和解析记录导航回路；可通过 Git 回滚：是。
+- 时间逻辑 / Time logic: 账号验证时间 UTC ISO 8601；Zone 数量在演示账号初始化/真实验证后缓存；DNS TTL 为秒数；工作流 run 时间以 UTC 记录；无真实 provider 写操作。
+- 验证 / Verification: `uv run python backend/manage.py makemigrations --check --dry-run` → no changes；`migrate --run-syncdb` → no pending migrations；Django check → no issues；`uv run pytest tests -q` → 24 passed；`npm run build --prefix frontend` → Vite 7.3.6 success；secret scan → no findings；本地 API health/providers/accounts/legacy domains/records → 200；浏览器验证账号显示“已连接 · 3 个 Zone”、DNS 5 条记录、账号管理表格、GoDaddy 添加抽屉和 Cloudflare/阿里云/腾讯云“即将支持”状态；真实 CI run `36305045244` → Django/pytest success、React/Vite success。
+- 利用 / Reuse: 克隆仓库后 `uv sync`、配置 `ACCOUNT_ENCRYPTION_KEY`、执行 `uv run python backend/manage.py migrate` 即可使用账号管理；旧 DNS API 继续映射默认 GoDaddy 账号；CI 自动检查 migrations、后端测试和前端构建。
+- 限制 / Limits: 真实 GoDaddy PAT 未配置，账号验证和 DNS 写入仅以演示/Mock 为证；Cloudflare、阿里云 DNS、腾讯云 DNS 适配器未实现；当前本机单 Workspace，无用户登录和团队权限；`.idea/` 仍为未跟踪目录且未纳入交付。
+- 下一步 / Next: 配置真实 GoDaddy PAT 后做多账号 provider 读取验收；再按 Phase 2 实现 Cloudflare Adapter。
