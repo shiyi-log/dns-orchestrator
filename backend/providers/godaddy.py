@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional
 
 from backend.app.config import Settings
 from backend.app.demo_data import demo_domains, demo_records
-from backend.app.godaddy_client import GoDaddyClient
+from backend.app.godaddy_client import GoDaddyAPIError, GoDaddyClient
 from backend.app.models import DNSRecord as LegacyDNSRecord
 from backend.app.models import RecordCreate, RecordUpdate
 
@@ -61,15 +62,35 @@ class GoDaddyAdapter(DNSProviderAdapter):
                 )
                 for domain in demo_domains()
             ]
-        return [
-            Zone(
-                id=domain.domain,
-                name=domain.domain,
-                status=domain.status,
-                record_count=domain.record_count,
-            )
+        domains = [
+            domain
             for domain in self.client.list_domains()
+            if domain.status.upper() in {"ACTIVE", "PENDING"}
         ]
+
+        def probe(domain: Any):
+            try:
+                return domain, len(self.client.list_records(domain.domain))
+            except GoDaddyAPIError:
+                return domain, None
+
+        zones = []
+        # Zone discovery is read-only. Probe a small bounded batch in parallel so
+        # one unavailable domain cannot make the dashboard look empty for minutes.
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            probes = executor.map(probe, domains)
+            for domain, record_count in probes:
+                if record_count is None:
+                    continue
+                zones.append(
+                    Zone(
+                        id=domain.domain,
+                        name=domain.domain,
+                        status=domain.status,
+                        record_count=record_count,
+                    )
+                )
+        return zones
 
     def list_records(self, zone: Zone) -> list[DNSRecord]:
         if self.demo_mode:

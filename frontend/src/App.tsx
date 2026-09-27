@@ -139,6 +139,7 @@ export default function App() {
   }
 
   const selectedSummary = domains.find((domain) => domain.domain === selectedDomain)
+  const selectedAccount = accounts.find((account) => account.id === selectedAccountId)
 
   const refreshAccounts = async () => {
     const result = await api.listAccounts()
@@ -163,7 +164,7 @@ export default function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumbs"><span>解析记录</span><span>/</span><strong>DNS 管理</strong></div>
-          <div className="account"><span>演示账户</span><span className="avatar">S</span></div>
+          <div className="account"><span>{selectedAccount?.display_name ?? '未选择账号'}</span><span className="avatar">{(selectedAccount?.display_name ?? 'S').slice(0, 1)}</span></div>
         </header>
 
         {accountView ? <section className="page-heading"><div><h1>账号管理</h1><p>管理 GoDaddy 连接，并为未来的多云 DNS 适配器预留统一入口。</p></div><button className="primary-button" type="button" onClick={() => setAccountDrawerOpen(true)}>＋ 添加账号</button></section> : <section className="page-heading">

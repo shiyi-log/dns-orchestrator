@@ -8,7 +8,6 @@ from .account_serializers import AccountCreateSerializer, AccountRecordSerialize
 from .account_service import PROVIDER_METADATA
 from . import services
 from .serializers import RecordSerializer
-from .services import service
 
 
 def _record_payload(record):
@@ -24,7 +23,7 @@ def _error_response(exc: GoDaddyAPIError):
 
 @api_view(["GET"])
 def health(request):
-    settings = service.settings
+    settings = services.service.settings
     ready = settings.godaddy_demo_mode or bool(settings.godaddy_pat)
     return Response({"status": "ok" if ready else "degraded", "demo_mode": settings.godaddy_demo_mode, "ready": ready})
 
@@ -43,7 +42,7 @@ def domains(request):
                 }
                 for zone in zones
             ])
-        return Response([item.model_dump() for item in service.list_domains()])
+        return Response([item.model_dump() for item in services.service.list_domains()])
     except GoDaddyAPIError as exc:
         return _error_response(exc)
 
@@ -103,12 +102,12 @@ def records(request, domain: str):
         serializer = RecordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            record = service.create_record(domain, serializer.to_record_create())
+            record = services.service.create_record(domain, serializer.to_record_create())
             return Response(_record_payload(record), status=status.HTTP_201_CREATED)
         except GoDaddyAPIError as exc:
             return _error_response(exc)
     try:
-        return Response([_record_payload(item) for item in service.list_records(domain)])
+        return Response([_record_payload(item) for item in services.service.list_records(domain)])
     except GoDaddyAPIError as exc:
         return _error_response(exc)
 
@@ -153,12 +152,12 @@ def record_detail(request, domain: str, record_id: str):
         serializer = RecordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            record = service.update_record(domain, record_id, serializer.to_record_update())
+            record = services.service.update_record(domain, record_id, serializer.to_record_update())
             return Response(_record_payload(record))
         except GoDaddyAPIError as exc:
             return _error_response(exc)
     try:
-        service.delete_record(domain, record_id)
+        services.service.delete_record(domain, record_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
     except GoDaddyAPIError as exc:
         return _error_response(exc)
@@ -168,10 +167,15 @@ def record_detail(request, domain: str, record_id: str):
 def activity(request):
     if services.account_service.activity():
         return Response([entry.model_dump() for entry in services.account_service.activity()])
-    return Response([entry.model_dump() for entry in service.activity()])
+    return Response([entry.model_dump() for entry in services.service.activity()])
 
 
 def _account_error_response(exc: Exception):
+    if isinstance(exc, GoDaddyAPIError):
+        return Response(
+            {"detail": exc.message, "status_code": exc.status_code, "retryable": exc.retryable},
+            status=exc.status_code,
+        )
     if isinstance(exc, UnsupportedProviderError):
         return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
     if isinstance(exc, ValueError):

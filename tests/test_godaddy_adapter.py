@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from backend.app.models import DNSRecord as LegacyDNSRecord
 from backend.app.models import DomainSummary, RecordCreate
+from backend.app.godaddy_client import GoDaddyAPIError
 from backend.providers.godaddy import GoDaddyAdapter
 
 
@@ -56,3 +57,27 @@ def test_godaddy_adapter_exposes_supported_capabilities():
 
     assert capabilities.provider == "godaddy"
     assert "A" in capabilities.record_types
+
+
+def test_godaddy_adapter_filters_unavailable_zones():
+    class ZoneClient(FakeGoDaddyClient):
+        def list_domains(self):
+            return [
+                DomainSummary(domain="unavailable.example", status="ACTIVE"),
+                DomainSummary(domain="readable.example", status="ACTIVE"),
+            ]
+
+        def list_records(self, domain):
+            if domain == "unavailable.example":
+                raise GoDaddyAPIError(404, "zone not found")
+            return super().list_records(domain)
+
+    adapter = GoDaddyAdapter(
+        account=SimpleNamespace(api_base="https://api.godaddy.com"),
+        credential_values={"token": "pat-test"},
+        client=ZoneClient(),
+    )
+
+    zones = adapter.list_zones()
+
+    assert [zone.name for zone in zones] == ["readable.example"]

@@ -144,3 +144,15 @@
 - 利用 / Reuse: 克隆仓库后 `uv sync`、配置 `ACCOUNT_ENCRYPTION_KEY`、执行 `uv run python backend/manage.py migrate` 即可使用账号管理；旧 DNS API 继续映射默认 GoDaddy 账号；CI 自动检查 migrations、后端测试和前端构建。
 - 限制 / Limits: 真实 GoDaddy PAT 未配置，账号验证和 DNS 写入仅以演示/Mock 为证；Cloudflare、阿里云 DNS、腾讯云 DNS 适配器未实现；当前本机单 Workspace，无用户登录和团队权限；`.idea/` 仍为未跟踪目录且未纳入交付。
 - 下一步 / Next: 配置真实 GoDaddy PAT 后做多账号 provider 读取验收；再按 Phase 2 实现 Cloudflare Adapter。
+
+## 2026-09-27T16:50:00+08:00 — 真实 PAT 读取验收与界面清理
+
+- 状态 / Status: 完成
+- 目标 / Goal: 使用用户根目录 `pat` 文件进行真实 GoDaddy 只读验收，并清理不可读 Zone、旧加密密钥和前端空白/错误状态。
+- 读取 / Read: `pat` — 仅读取本地文件用于后端认证，未输出内容；`/api/accounts` — 真实账号状态；GoDaddy v3 DNS API — 对 14 个域名进行只读 Zone/Record 探测；浏览器 `http://127.0.0.1:5173/` — 真实账号页面截图和 DOM。
+- 修改 / Write: `.gitignore`、`.env.example`、`backend/app/config.py` — 支持根目录 `GODADDY_PAT_FILE` 并忽略 `pat`；`backend/providers/godaddy.py` — 过滤 CANCELLED/ZONE_NOT_FOUND 域名，并并行探测有效 Zone；`backend/app/godaddy_client.py` — 忽略 GoDaddy 管理的 SOA/空数据记录；`backend/dns_api/views.py` — 返回 GoDaddy 真实错误详情；`frontend/src/App.tsx`、`tests/test_client.py`、`tests/test_godaddy_adapter.py` — 当前账号名称、SOA 过滤回归和 UI 映射；本地 SQLite 凭证使用稳定开发密钥重新加密，数据库备份保存于 `/tmp/godaddy-db-before-credential-repair-20260927163937.sqlite3`。PAT 文件权限收紧为 `0600`，未加入 Git。
+- 时间逻辑 / Time logic: 真实读取只使用 GET；每个可读 Zone 的记录读取受现有 15 秒超时和一次 GET 重试规则约束；Zone 探测最多 4 个并发只读请求；无 DNS 写操作。
+- 验证 / Verification: 根目录 PAT 文件存在且权限 `600`，未输出内容；真实 `/api/health` → `demo_mode=false`、ready=true；真实账号验证 → active、14 个域名发现；有效 DNS Zone → `ai233.me` 8 条、`kkbot.cc` 7 条、`shiyiweb.com` 9 条记录；不可读 Zone 返回明确 404/409；真实 `/api/domains` 过滤为 3 个可读 Zone；`uv run pytest tests -q` → 26 passed；Django check → no issues；Vite build → success；浏览器显示真实账号“已连接 · 3 个 Zone”、可读 Zone 下拉和真实 DNS 记录；console errors 为空。
+- 利用 / Reuse: 后续启动只需保留 `pat`（0600）和 `.env` 的 `GODADDY_PAT_FILE`；轮换 PAT 时替换 `pat` 文件并重启 Django，再调用账号验证；不可读/已取消域名不会再污染前端 Zone 列表。
+- 限制 / Limits: 真实账号存在部分 GoDaddy 状态为 CANCELLED 或 `ZONE_NOT_FOUND` 的域名，已在 UI 过滤并保留 API 错误边界；本次只读验收，没有创建、修改或删除 DNS 记录；Cloudflare、阿里云、腾讯云仍未实现。
+- 下一步 / Next: 提交本次配置和界面修复，重新运行 CI；后续如需真实 DNS 写入，需单独指定域名、记录、变更前后值和回滚方案。

@@ -56,7 +56,12 @@ class GoDaddyClient:
             params={"page": 1, "pageSize": 100},
         )
         items = payload if isinstance(payload, list) else payload.get("items", [])
-        return [self._normalize_record(item) for item in items]
+        return [
+            self._normalize_record(item)
+            for item in items
+            if item.get("type") not in {"SOA"}
+            and item.get("data") not in {None, ""}
+        ]
 
     def create_record(self, domain: str, record: RecordCreate) -> DNSRecord:
         zone = quote(domain, safe="")

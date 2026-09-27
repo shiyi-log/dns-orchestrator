@@ -70,3 +70,23 @@ def test_client_does_not_retry_write():
         )
 
     assert calls["count"] == 1
+
+
+def test_client_ignores_provider_managed_soa_record():
+    transport = httpx.MockTransport(
+        lambda request: httpx.Response(
+            200,
+            json=[
+                {"recordId": "soa", "type": "SOA", "name": "@", "data": "", "ttl": 3600},
+                {"recordId": "a1", "type": "A", "name": "@", "data": "192.0.2.1", "ttl": 600},
+            ],
+        )
+    )
+    client = GoDaddyClient(
+        Settings(godaddy_pat="pat-test", godaddy_demo_mode=False),
+        http_client=httpx.Client(transport=transport),
+    )
+
+    records = client.list_records("example.com")
+
+    assert [record.id for record in records] == ["a1"]
