@@ -96,3 +96,15 @@
 - 利用 / Reuse: 新克隆环境复制 `.env.example` 后，开发测试客户端可直接使用；生产 `DEBUG=false` 时不会自动扩大白名单。
 - 限制 / Limits: 未配置真实 PAT；本次浏览器自动化再次点击编辑按钮时未能定位关闭按钮，之前运行已验证编辑抽屉和保存提示；该项需要在后续 UI 回归中继续确认。
 - 下一步 / Next: 多账号管理先完成设计确认，再决定凭证持久化、账号隔离和切换路由。
+
+## 2026-09-27T12:40:00+08:00 — 多提供商账号架构设计
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 为用户管理多个 GoDaddy 账号，并为后续 Cloudflare、阿里云 DNS、腾讯云 DNS 适配器建立稳定的提供商无关边界。
+- 读取 / Read: `backend/app/*`、`backend/dns_api/*`、`frontend/src/*` — 当前单账号内存服务、GoDaddy 客户端和 DNS 表格界面；`docs/superpowers/specs/2026-09-27-godaddy-dns-manager-design.md` — 当前 GoDaddy MVP 边界；用户确认 — 第一阶段采用统一 Provider 架构，首期落地 GoDaddy 多账号，其他提供商后续扩展。
+- 修改 / Write: 待写入 `docs/superpowers/specs/2026-09-27-multi-provider-accounts-design.md`；本条只记录设计工作，不修改业务代码；可回滚：是。
+- 时间逻辑 / Time logic: 账号验证时间保存为 UTC ISO 8601；DNS TTL 仍为秒数整数；凭证轮换不自动重试外部写操作；账号状态按最近一次连接验证结果更新。
+- 验证 / Verification: 当前为设计阶段；未运行多账号代码、未创建数据库迁移、未执行真实多账号 provider 调用。
+- 利用 / Reuse: GoDaddy 适配器将成为第一个实现；Cloudflare、阿里云、腾讯云复用账号、凭证、Zone、记录和能力矩阵接口。
+- 限制 / Limits: 本阶段不实现 Cloudflare、阿里云或腾讯云连接器；不引入团队登录、角色权限和部署；未配置真实 PAT。
+- 下一步 / Next: 写入并自审多提供商账号设计说明，提交后等待用户审阅，再创建实现计划。
