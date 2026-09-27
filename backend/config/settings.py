@@ -19,6 +19,7 @@ ASGI_APPLICATION = "backend.config.asgi.application"
 INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
+    "backend.accounts",
     "backend.dns_api",
 ]
 
