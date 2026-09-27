@@ -1,0 +1,2 @@
+# Runtime and development dependencies are declared in the repository root
+# pyproject.toml and installed with `uv sync`.
