@@ -84,3 +84,15 @@
 - 利用 / Reuse: 后续开发文档以本设计说明为章节基线；新增接口或配置时可沿用“事实来源 → API/模块 → 测试 → 限制”写法。
 - 限制 / Limits: 真实 GoDaddy provider、浏览器完整流程、部署和 GitHub Actions 运行状态不由本设计说明证明。
 - 下一步 / Next: 用户审阅本设计说明后，创建 `docs/DEVELOPMENT.md` 并同步 README 入口。
+
+## 2026-09-27T12:34:00+08:00 — 本地运行回归与测试主机修复
+
+- 状态 / Status: 完成
+- 目标 / Goal: 在当前工作区实际启动 Django/Vite，验证 API、页面和测试链路，并修复测试客户端被本地开发白名单拒绝的问题。
+- 读取 / Read: `backend/config/settings.py` — 发现 `DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost` 时没有 `testserver`；当前 `.idea/` — 未跟踪目录，保留且不纳入提交；运行日志 — Django 8000 和 Vite 5173 正在监听。
+- 修改 / Write: `backend/config/settings.py` — 仅在 `DEBUG=true` 时追加 `testserver`，生产模式继续使用显式 `ALLOWED_HOSTS`；可通过 Git 回滚：是。`.idea/` 无修改。
+- 时间逻辑 / Time logic: 本条记录使用 `Asia/Shanghai`（UTC+08:00）；服务活动时间和 DNS TTL 规则不变。
+- 验证 / Verification: 修复前 `uv run pytest tests -q` 为 3 failed/6 passed，失败根因为 `DisallowedHost: testserver`；修复后 `uv run pytest tests -q` → 9 passed；`uv run python backend/manage.py check` → no issues；Django `/api/health` → HTTP 200、`demo_mode=true`；DNS records → HTTP 200、5 条记录、A/AAAA/CNAME/MX/TXT；`npm run build --prefix frontend` → Vite 构建成功；浏览器页面加载、桌面布局、A 类型筛选和控制台错误检查通过。
+- 利用 / Reuse: 新克隆环境复制 `.env.example` 后，开发测试客户端可直接使用；生产 `DEBUG=false` 时不会自动扩大白名单。
+- 限制 / Limits: 未配置真实 PAT；本次浏览器自动化再次点击编辑按钮时未能定位关闭按钮，之前运行已验证编辑抽屉和保存提示；该项需要在后续 UI 回归中继续确认。
+- 下一步 / Next: 多账号管理先完成设计确认，再决定凭证持久化、账号隔离和切换路由。
