@@ -24,7 +24,10 @@ export const api = {
   verifyAccount: (id: string) => request<ProviderAccountSummary>(`/accounts/${encodeURIComponent(id)}/verify`, { method: 'POST' }),
   setDefaultAccount: (id: string) => request<ProviderAccountSummary>(`/accounts/${encodeURIComponent(id)}/set-default`, { method: 'POST' }),
   listZones: (accountId: string) => request<Zone[]>(`/accounts/${encodeURIComponent(accountId)}/zones`),
-  listAccountRecords: (accountId: string, zone: string) => request<DNSRecord[]>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records`),
+  listAccountRecords: async (accountId: string, zone: string) => {
+    const records = await request<Array<DNSRecord & { content?: string }>>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records`)
+    return records.map((record) => ({ ...record, data: record.data ?? record.content ?? '' }))
+  },
   createAccountRecord: (accountId: string, zone: string, payload: RecordDraft) => request<DNSRecord>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records`, { method: 'POST', body: JSON.stringify({ type: payload.type, name: payload.name, content: payload.data, ttl: payload.ttl, priority: payload.priority }) }),
   updateAccountRecord: (accountId: string, zone: string, id: string, payload: RecordDraft) => request<DNSRecord>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ type: payload.type, name: payload.name, content: payload.data, ttl: payload.ttl, priority: payload.priority }) }),
   deleteAccountRecord: (accountId: string, zone: string, id: string) => request<void>(`/accounts/${encodeURIComponent(accountId)}/zones/${encodeURIComponent(zone)}/records/${encodeURIComponent(id)}`, { method: 'DELETE' }),

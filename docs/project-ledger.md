@@ -120,3 +120,15 @@
 - 利用 / Reuse: 计划任务按后端凭证、数据库、Provider、API、前端和交付分层，可按任务提交并回滚。
 - 限制 / Limits: 当前只准备计划，Cloudflare、阿里云、腾讯云真实调用和真实 GoDaddy PAT 仍未运行；`.idea/` 不纳入本次工作。
 - 下一步 / Next: 提交计划后按任务 1 开始 TDD 实现。
+
+## 2026-09-27T13:05:00+08:00 — GoDaddy 多账号第一阶段实现
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 完成第一期多账号、多提供商边界：GoDaddy 多账号可用，Cloudflare、阿里云、腾讯云只显示未实现状态。
+- 读取 / Read: `docs/superpowers/plans/2026-09-27-multi-provider-accounts.md` — 当前执行计划；`backend/accounts/*`、`backend/providers/*`、`backend/dns_api/*`、`frontend/src/*` — 实现边界；`.env.example`、`README.md`、`.github/workflows/ci.yml` — 配置、文档和 CI 入口。
+- 修改 / Write: `backend/accounts/*` — Workspace/ProviderAccount 模型、迁移、凭证仓储；`backend/providers/*` — Provider Adapter 和 GoDaddy 实现；`backend/dns_api/*` — 账号 CRUD、验证、默认切换、账号范围 Zone/Record API 和旧 API 兼容；`frontend/src/*` — 账号切换器、账号管理表格/抽屉和账号范围 DNS 请求；`pyproject.toml`、`uv.lock`、`.env.example`、`README.md`、`.github/workflows/ci.yml` — cryptography、pytest-django、配置文档、迁移 CI。`.idea/` 保留未跟踪，不纳入提交。
+- 时间逻辑 / Time logic: 账号验证时间保存 UTC ISO 8601；验证成功时缓存 `last_zone_count`；DNS TTL 继续使用秒数；读请求最多一次重试，写请求不自动重试。
+- 验证 / Verification: TDD 过程已验证加密 5 个测试、账号模型 3 个测试、Provider 3 个测试、账号 API 4 个测试；全量 `uv run pytest tests -q` → 24 passed；Django check → no issues；前端 `npm run build --prefix frontend` → Vite build success。浏览器多账号交互和 GitHub CI 真实运行待完成。
+- 利用 / Reuse: 设置 `ACCOUNT_ENCRYPTION_KEY` 后可持久化多个 GoDaddy 账号；旧 `/api/domains*` 路由使用默认账号；ProviderFactory 可继续扩展 Cloudflare、阿里云、腾讯云。
+- 限制 / Limits: 未配置真实 PAT，未运行真实 GoDaddy 多账号 provider；后续提供商没有真实 API；当前本机单 Workspace，不含登录/团队权限；`.idea/` 未跟踪且未审计为交付内容。
+- 下一步 / Next: 运行 migration、secret scan、Django/Vite 本地服务和浏览器账号切换，提交推送并读取 CI run。

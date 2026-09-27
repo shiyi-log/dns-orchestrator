@@ -8,6 +8,7 @@ from backend.accounts.repository import ProviderAccountRepository
 from backend.app.accounts import AccountCredential, ProviderAccountSummary
 from backend.app.config import Settings
 from backend.app.crypto import CredentialError
+from backend.app.demo_data import demo_domains
 from backend.app.models import ActivityEntry
 from backend.providers.base import DNSRecord, DNSRecordDraft, ProviderStatus, Zone
 from backend.providers.factory import ProviderFactory, UnsupportedProviderError
@@ -183,14 +184,24 @@ class AccountService:
         if not self.settings.godaddy_demo_mode:
             return
         workspace = Workspace.get_default()
-        if self.repository.list(workspace):
+        existing = self.repository.list(workspace)
+        if existing:
+            demo = next((item for item in existing if item.display_name == "演示 GoDaddy"), None)
+            if demo and (demo.status != "active" or demo.last_zone_count != len(demo_domains())):
+                demo.status = "active"
+                demo.last_zone_count = len(demo_domains())
+                demo.last_error = ""
+                demo.save(update_fields=["status", "last_zone_count", "last_error", "updated_at"])
             return
-        self.repository.create(
+        account = self.repository.create(
             workspace,
             provider="godaddy",
             display_name="演示 GoDaddy",
             credential=AccountCredential(provider="godaddy", values={"token": "demo-token"}),
         )
+        account.status = "active"
+        account.last_zone_count = len(demo_domains())
+        account.save(update_fields=["status", "last_zone_count", "updated_at"])
 
     def _get_account(self, account_id: str) -> ProviderAccount:
         workspace = Workspace.get_default()

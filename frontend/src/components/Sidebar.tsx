@@ -10,9 +10,10 @@ interface SidebarProps {
   selectedAccountId: string
   onSelectAccount: (id: string) => void
   onManageAccounts: () => void
+  onShowDns: () => void
 }
 
-export default function Sidebar({ domains, selectedDomain, onSelectDomain, accounts, selectedAccountId, onSelectAccount, onManageAccounts }: SidebarProps) {
+export default function Sidebar({ domains, selectedDomain, onSelectDomain, accounts, selectedAccountId, onSelectAccount, onManageAccounts, onShowDns }: SidebarProps) {
   const currentDomain = domains.find((domain) => domain.domain === selectedDomain)
 
   return (
@@ -24,7 +25,7 @@ export default function Sidebar({ domains, selectedDomain, onSelectDomain, accou
       <div className="nav-label">管理</div>
       <button className="nav-item" type="button"><span className="nav-icon">⌂</span><span>概览</span></button>
       <button className="nav-item" type="button"><span className="nav-icon">◇</span><span>域名</span><span className="nav-meta">{domains.length}</span></button>
-      <button className="nav-item active" type="button"><span className="nav-icon">≋</span><span>解析记录</span></button>
+      <button className="nav-item active" type="button" onClick={onShowDns}><span className="nav-icon">≋</span><span>解析记录</span></button>
       <button className="nav-item" type="button"><span className="nav-icon">◷</span><span>变更记录</span><span className="nav-meta">2</span></button>
 
       <div className="nav-context">

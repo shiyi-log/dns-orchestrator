@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/shiyi-log/godaddy-dns-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/shiyi-log/godaddy-dns-manager/actions/workflows/ci.yml)
 
-一个使用 Django、Django REST Framework、React 和 Vite 构建的 GoDaddy 域名解析可视化管理台。
+一个使用 Django、Django REST Framework、React 和 Vite 构建的多账号、多提供商 DNS 可视化管理台。
 
 当前版本聚焦 DNS 记录管理：
 
@@ -12,6 +12,7 @@
 - 展开式导航和当前域名上下文；
 - 提交前预览、成功提示、错误状态和本地操作记录；
 - 没有 PAT 时使用确定性的本地演示数据。
+- 支持多个 GoDaddy 账号、默认账号切换和加密 PAT 存储；Cloudflare、阿里云 DNS、腾讯云 DNS 已预留适配边界，第一阶段不会调用它们的真实 API。
 
 ## 快速启动
 
@@ -21,7 +22,11 @@
 uv sync
 cp .env.example .env
 
+# 首次启用账号管理时，为 ACCOUNT_ENCRYPTION_KEY 设置一个稳定的 Fernet 密钥或高熵秘密。
+ACCOUNT_ENCRYPTION_KEY=[REDACTED_SECRET]
+
 uv run python backend/manage.py check
+uv run python backend/manage.py migrate
 uv run python backend/manage.py runserver 127.0.0.1:8000
 ```
 
@@ -74,6 +79,20 @@ POST   /api/domains/{domain}/records
 PUT    /api/domains/{domain}/records/{record_id}
 DELETE /api/domains/{domain}/records/{record_id}
 GET    /api/activity
+
+# 多账号和提供商
+GET    /api/providers
+GET    /api/accounts
+POST   /api/accounts
+PATCH  /api/accounts/{account_id}
+DELETE /api/accounts/{account_id}
+POST   /api/accounts/{account_id}/verify
+POST   /api/accounts/{account_id}/set-default
+GET    /api/accounts/{account_id}/zones
+GET    /api/accounts/{account_id}/zones/{zone}/records
+POST   /api/accounts/{account_id}/zones/{zone}/records
+PUT    /api/accounts/{account_id}/zones/{zone}/records/{record_id}
+DELETE /api/accounts/{account_id}/zones/{zone}/records/{record_id}
 ```
 
 ## 目录结构
@@ -81,7 +100,9 @@ GET    /api/activity
 ```text
 backend/
   app/                  # GoDaddy 客户端、数据结构和演示数据
+  accounts/             # Workspace、ProviderAccount、迁移和凭证仓储
   config/               # Django 配置、URL、WSGI/ASGI
+  providers/            # Provider Adapter、GoDaddy 实现和未来提供商边界
   dns_api/              # Django REST Framework API
   manage.py
 frontend/
@@ -98,6 +119,8 @@ tests/                  # 后端单元和 API 测试
 ```bash
 uv run pytest tests -q
 uv run python backend/manage.py check
+uv run python backend/manage.py makemigrations --check --dry-run
+uv run python backend/manage.py migrate --check
 npm run build --prefix frontend
 ```
 

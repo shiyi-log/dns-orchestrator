@@ -39,6 +39,12 @@ jobs:
       - name: Run Django system checks
         run: uv run --locked --python 3.9 python backend/manage.py check
 
+      - name: Check Django migrations
+        run: uv run --locked --python 3.9 python backend/manage.py makemigrations --check --dry-run
+
+      - name: Apply Django migrations
+        run: uv run --locked --python 3.9 python backend/manage.py migrate --run-syncdb
+
       - name: Run backend tests
         run: uv run --locked --python 3.9 pytest tests -q
 

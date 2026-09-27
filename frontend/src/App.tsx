@@ -46,7 +46,11 @@ export default function App() {
     if (!accountId) return
     const result = await api.listZones(accountId)
     setZones(result)
-    if (!selectedZone && result[0]) setSelectedZone(result[0].name)
+    setDomains(result.map((zone) => ({ domain: zone.name, status: zone.status, record_count: zone.record_count })))
+    if (!selectedZone && result[0]) {
+      setSelectedZone(result[0].name)
+      setSelectedDomain(result[0].name)
+    }
     return result
   }
 
@@ -155,7 +159,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar domains={domains} selectedDomain={selectedDomain} onSelectDomain={setSelectedDomain} accounts={accounts} selectedAccountId={selectedAccountId} onSelectAccount={setSelectedAccountId} onManageAccounts={() => setAccountView(true)} />
+      <Sidebar domains={domains} selectedDomain={selectedDomain} onSelectDomain={setSelectedDomain} accounts={accounts} selectedAccountId={selectedAccountId} onSelectAccount={setSelectedAccountId} onManageAccounts={() => setAccountView(true)} onShowDns={() => setAccountView(false)} />
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumbs"><span>解析记录</span><span>/</span><strong>DNS 管理</strong></div>
