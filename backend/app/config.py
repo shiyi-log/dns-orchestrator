@@ -22,6 +22,7 @@ class Settings:
     godaddy_api_base: str = "https://api.godaddy.com"
     request_timeout_seconds: float = 15.0
     cors_origins: str = "http://localhost:5173"
+    account_encryption_key: Optional[str] = None
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -36,4 +37,5 @@ def get_settings() -> Settings:
         godaddy_api_base=os.getenv("GODADDY_API_BASE", "https://api.godaddy.com").rstrip("/"),
         request_timeout_seconds=float(os.getenv("REQUEST_TIMEOUT_SECONDS", "15")),
         cors_origins=os.getenv("CORS_ORIGINS", "http://localhost:5173"),
+        account_encryption_key=os.getenv("ACCOUNT_ENCRYPTION_KEY"),
     )

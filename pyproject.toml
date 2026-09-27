@@ -8,6 +8,7 @@ dependencies = [
   "Django==4.2.30",
   "djangorestframework==3.16.1",
   "django-cors-headers==4.9.0",
+  "cryptography==46.0.2",
   "httpx==0.28.1",
   "pydantic==2.13.5",
   "python-dotenv==1.2.1",
