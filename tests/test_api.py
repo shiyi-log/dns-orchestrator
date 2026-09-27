@@ -6,11 +6,15 @@ import django
 
 django.setup()
 
+import pytest
 from rest_framework.test import APIClient
 
 from backend.app.config import Settings
 from backend.app.service import DNSService
 from backend.dns_api import services as services_module
+
+
+pytestmark = pytest.mark.django_db
 
 
 def client_for_demo():
