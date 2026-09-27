@@ -108,3 +108,15 @@
 - 利用 / Reuse: GoDaddy 适配器将成为第一个实现；Cloudflare、阿里云、腾讯云复用账号、凭证、Zone、记录和能力矩阵接口。
 - 限制 / Limits: 本阶段不实现 Cloudflare、阿里云或腾讯云连接器；不引入团队登录、角色权限和部署；未配置真实 PAT。
 - 下一步 / Next: 写入并自审多提供商账号设计说明，提交后等待用户审阅，再创建实现计划。
+
+## 2026-09-27T12:46:00+08:00 — 多提供商账号实现计划
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 将已批准的多提供商账号设计拆解为可测试的 Django、Provider Adapter、REST API、React 和 CI 任务。
+- 读取 / Read: `docs/superpowers/specs/2026-09-27-multi-provider-accounts-design.md` — 已批准的架构和第一期边界；`backend/*`、`frontend/src/*`、`tests/*`、`pyproject.toml` — 当前实现入口和测试结构；`docs/superpowers/plans/2026-09-27-multi-provider-accounts.md` — 新增实现计划。
+- 修改 / Write: `docs/superpowers/plans/2026-09-27-multi-provider-accounts.md` — 记录六个任务、接口、失败测试、实现步骤和验收命令；可通过 Git 回滚：是。
+- 时间逻辑 / Time logic: 账号验证时间使用 UTC ISO 8601；凭证轮换、DNS TTL、读重试和写不重试规则沿用设计说明；不新增时间计算。
+- 验证 / Verification: 完成计划自审；未发现 TBD、TODO 或接口命名不一致；尚未执行多账号代码测试。
+- 利用 / Reuse: 计划任务按后端凭证、数据库、Provider、API、前端和交付分层，可按任务提交并回滚。
+- 限制 / Limits: 当前只准备计划，Cloudflare、阿里云、腾讯云真实调用和真实 GoDaddy PAT 仍未运行；`.idea/` 不纳入本次工作。
+- 下一步 / Next: 提交计划后按任务 1 开始 TDD 实现。
