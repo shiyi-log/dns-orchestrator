@@ -1,1 +1,1 @@
-"""GoDaddy DNS Manager backend package."""
+"""DNS Orchestrator backend package."""

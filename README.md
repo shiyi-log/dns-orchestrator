@@ -1,12 +1,12 @@
-# GoDaddy DNS Manager
+# 解析中枢 / DNS Orchestrator
 
-[![CI](https://github.com/shiyi-log/godaddy-dns-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/shiyi-log/godaddy-dns-manager/actions/workflows/ci.yml)
+[![CI](https://github.com/shiyi-log/dns-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/shiyi-log/dns-orchestrator/actions/workflows/ci.yml)
 
-一个使用 Django、Django REST Framework、React 和 Vite 构建的多账号、多提供商 DNS 可视化管理台。
+解析中枢是一个使用 Django、Django REST Framework、React 和 Vite 构建的多账号、多提供商 DNS 可视化管理台。GoDaddy 是当前已实现的首个 Provider，其他 Provider 通过统一适配器边界接入。
 
 当前版本聚焦 DNS 记录管理：
 
-- 查看 GoDaddy 账户中的域名和 DNS 记录；
+- 查看已接入 DNS 提供商账户中的域名和 DNS 记录；
 - 新增、修改、删除 A、AAAA、CNAME、MX、TXT、NS 等记录；
 - 表格优先的解析管理界面；
 - 展开式导航和当前域名上下文；
@@ -38,12 +38,12 @@ npm install
 npm run dev
 ```
 
-打开 `http://localhost:5173`。默认演示模式会显示 `example.com` 和示例解析记录，不需要 GoDaddy 凭证。
+打开 `http://localhost:5173`。默认演示模式会显示 `example.com` 和示例解析记录，不需要外部 Provider 凭证。
 
 如果本机 npm 缓存权限异常，可以指定一个临时缓存目录：
 
 ```bash
-npm_config_cache=/tmp/godaddy-npm-cache npm install
+npm_config_cache=/tmp/dns-orchestrator-npm-cache npm install
 ```
 
 ## 接入真实 GoDaddy API
@@ -99,7 +99,7 @@ DELETE /api/accounts/{account_id}/zones/{zone}/records/{record_id}
 
 ```text
 backend/
-  app/                  # GoDaddy 客户端、数据结构和演示数据
+  app/                  # Provider 客户端、数据结构和演示数据
   accounts/             # Workspace、ProviderAccount、迁移和凭证仓储
   config/               # Django 配置、URL、WSGI/ASGI
   providers/            # Provider Adapter、GoDaddy 实现和未来提供商边界

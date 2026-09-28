@@ -19,7 +19,7 @@ export default function Sidebar({ domains, selectedDomain, onSelectDomain, accou
   return (
     <aside className="sidebar">
       <div className="brand">
-        go<span>daddy</span> <small>/ dns</small>
+        解析<span>中枢</span> <small>/ DNS</small>
       </div>
       <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={onSelectAccount} onManage={onManageAccounts} />
       <div className="nav-label">管理</div>
@@ -44,7 +44,7 @@ export default function Sidebar({ domains, selectedDomain, onSelectDomain, accou
 
       <div className="nav-label nav-label-system">系统</div>
       <button className="nav-item" type="button"><span className="nav-icon">⚙</span><span>设置</span></button>
-      <div className="sidebar-foot">GoDaddy API<br /><span>服务运行正常</span></div>
+      <div className="sidebar-foot">Provider API<br /><span>服务运行正常</span></div>
     </aside>
   )
 }

@@ -1,4 +1,4 @@
-# GoDaddy DNS Manager 开发文档设计说明
+# 解析中枢 / DNS Orchestrator 开发文档设计说明
 
 ## 目标
 
@@ -6,7 +6,7 @@
 
 ## 当前缺口
 
-`README.md` 已覆盖项目简介、快速启动、真实 GoDaddy PAT 配置、API 路由和基础测试命令，但仍缺少以下开发者需要的上下文：
+`README.md` 已覆盖解析中枢项目简介、快速启动、真实 GoDaddy PAT 配置、API 路由和基础测试命令，但仍缺少以下开发者需要的上下文：
 
 - 浏览器、Django REST Framework、`DNSService` 和 GoDaddy API 之间的数据流；
 - 后端模块与前端组件的职责、扩展位置和依赖方向；

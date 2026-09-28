@@ -1,8 +1,8 @@
-# GoDaddy DNS Manager 设计说明
+# 解析中枢 / DNS Orchestrator 设计说明
 
 ## 目标
 
-从空目录创建一个可开源、可本地运行的 Django GoDaddy DNS 管理项目。第一版聚焦域名解析：读取域名和 DNS 记录，新增、修改、删除记录，展示同步状态和最近操作。
+从空目录创建一个可开源、可本地运行的 Django DNS 管理项目。第一版以 GoDaddy 为首个 Provider，聚焦域名解析：读取域名和 DNS 记录，新增、修改、删除记录，展示同步状态和最近操作。
 
 ## 范围
 

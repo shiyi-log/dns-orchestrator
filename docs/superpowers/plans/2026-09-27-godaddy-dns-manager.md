@@ -1,10 +1,10 @@
-# GoDaddy DNS Manager Implementation Plan
+# DNS Orchestrator Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a runnable open-source GoDaddy DNS management MVP with a Django REST Framework adapter and a table-first React dashboard.
+**Goal:** Build a runnable open-source multi-provider DNS orchestration MVP with a Django REST Framework adapter and a table-first React dashboard; GoDaddy is the first implemented provider.
 
-**Architecture:** The browser calls only Django REST Framework `/api/*` endpoints. Django owns the GoDaddy PAT, translates GoDaddy records into stable project schemas, and falls back to deterministic demo fixtures when demo mode is enabled. React + Vite renders the approved expanded-navigation/table-first design.
+**Architecture:** The browser calls only Django REST Framework `/api/*` endpoints. Django owns provider credentials, translates provider records into stable project schemas, and falls back to deterministic demo fixtures when demo mode is enabled. React + Vite renders the approved expanded-navigation/table-first design.
 
 **Tech Stack:** Python 3.9+, Django 4.2 LTS, Django REST Framework, django-cors-headers, httpx, pydantic, pytest; React 19, TypeScript 7, Vite 8, CSS modules-free component styles.
 

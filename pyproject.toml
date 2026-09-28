@@ -1,7 +1,7 @@
 [project]
-name = "godaddy-dns-manager"
+name = "dns-orchestrator"
 version = "0.1.0"
-description = "Django and React dashboard for GoDaddy DNS record management"
+description = "Django and React dashboard for multi-provider DNS orchestration"
 readme = "README.md"
 requires-python = ">=3.9,<3.14"
 dependencies = [

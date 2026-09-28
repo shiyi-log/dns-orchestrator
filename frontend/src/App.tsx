@@ -167,7 +167,7 @@ export default function App() {
           <div className="account"><span>{selectedAccount?.display_name ?? '未选择账号'}</span><span className="avatar">{(selectedAccount?.display_name ?? 'S').slice(0, 1)}</span></div>
         </header>
 
-        {accountView ? <section className="page-heading"><div><h1>账号管理</h1><p>管理 GoDaddy 连接，并为未来的多云 DNS 适配器预留统一入口。</p></div><button className="primary-button" type="button" onClick={() => setAccountDrawerOpen(true)}>＋ 添加账号</button></section> : <section className="page-heading">
+        {accountView ? <section className="page-heading"><div><h1>账号管理</h1><p>管理 DNS 提供商连接，并为多云适配器预留统一入口。</p></div><button className="primary-button" type="button" onClick={() => setAccountDrawerOpen(true)}>＋ 添加账号</button></section> : <section className="page-heading">
           <div><h1>DNS 解析</h1><p>集中管理域名的 A、CNAME、MX、TXT 和其他解析记录。</p></div>
           <button className="primary-button" type="button" onClick={openCreate}>＋ 新增记录</button>
         </section>}
@@ -199,7 +199,7 @@ export default function App() {
           {error && <div className="alert error">{error}</div>}
           {notice && <div className="alert success">{notice}</div>}
           {loading ? <div className="loading">正在读取 {selectedDomain || '域名'} 的解析记录…</div> : <RecordTable records={filteredRecords} onEdit={(record) => { setEditingRecord(record); setDrawerOpen(true) }} onDelete={deleteRecord} />}
-          <div className="table-footer"><span>显示 <strong>{filteredRecords.length}</strong> / 共 {records.length} 条记录</span><span>数据来自 {selectedSummary?.domain ?? 'GoDaddy'}</span></div>
+          <div className="table-footer"><span>显示 <strong>{filteredRecords.length}</strong> / 共 {records.length} 条记录</span><span>数据来自 {selectedSummary?.domain ?? '当前提供商'}</span></div>
         </section>}
       </main>
       <RecordDrawer open={drawerOpen} record={editingRecord} onClose={() => setDrawerOpen(false)} onSubmit={saveRecord} />
