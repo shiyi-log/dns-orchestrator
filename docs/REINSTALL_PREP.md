@@ -6,7 +6,7 @@
 
 - 仓库：`https://github.com/shiyi-log/dns-orchestrator.git`
 - 分支：`main`
-- 已推送提交：`9b08dea3f562ecf6a7da984c785834d03e1fa61e`
+- 最终提交以远程 `main` 和快照 `manifest.txt` 中的 HEAD 为准；不要依赖本文的固定 SHA。
 - 本地路径：`/Users/a399/Desktop/data/godaddy`
 - 本地时区：`Asia/Shanghai`（UTC+08:00）
 
@@ -40,6 +40,8 @@ git ls-remote origin refs/heads/main
 
 请把整个快照目录复制到加密的外置盘或密码管理的安全文件区。不要把它上传到公开仓库或未加密网盘。`runtime/.env`、`runtime/pat` 和 `runtime/backend-db.sqlite3` 应保持仅本人可读。
 
+复制后在快照目录中运行 `shasum -a 256 -c checksums.sha256`；所有文件都应显示 `OK`。再用 `git bundle verify git-repo.bundle` 检查离线 Git 包。
+
 以下目录没有复制，因为它们可以从锁文件重建：`.venv/`、`frontend/node_modules/`、`frontend/dist/`、`.pytest_cache/`。`.env` 中的 `ACCOUNT_ENCRYPTION_KEY` 必须和 SQLite 中已保存账号的加密密钥保持一致；丢失该密钥后，数据库中的已保存 PAT 无法解密。
 
 ## 重装后的恢复顺序
@@ -50,8 +52,10 @@ git ls-remote origin refs/heads/main
    ```bash
    git clone https://github.com/shiyi-log/dns-orchestrator.git
    cd dns-orchestrator
-   git checkout 9b08dea3f562ecf6a7da984c785834d03e1fa61e
+   git switch main
    ```
+
+   如果需要精确恢复快照当时的版本，再按快照 `manifest.txt` 中的 HEAD 检出对应提交。
 
 3. 从快照恢复本机状态。将快照目录替换为实际保存位置：
 
