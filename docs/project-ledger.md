@@ -230,3 +230,15 @@
 - 利用 / Reuse: 重装后按 `docs/REINSTALL_PREP.md` 从 `https://github.com/shiyi-log/dns-orchestrator.git` 克隆，恢复 `.env`、`pat` 和 SQLite，再用 `uv sync --locked`、`npm ci` 重建依赖；Git bundle 可在 GitHub 不可用时离线恢复。
 - 限制 / Limits: 快照仍含敏感文件，必须复制到加密外置存储；未执行系统抹除、磁盘擦除或远端 DNS 变更；`.idea/` 和 `.superpowers/` 只作为可选本机状态保存。
 - 下一步 / Next: 完成检查、提交和推送后，将本条关闭为完成，并报告快照路径、校验结果和未执行的系统级操作。
+
+## 2026-09-29T13:48:07+08:00 — 重装准备交付完成
+
+- 状态 / Status: 完成
+- 目标 / Goal: 完成代码提交推送，并形成可校验的重装恢复材料。
+- 读取 / Read: 本地测试输出、`git push` 输出、`git ls-remote origin refs/heads/main`、快照 `checksums.sha256`；未读取或输出敏感值。
+- 修改 / Write: 提交 `3c6257a4337ce97afffda1e3f4cdea1ca2a6c128` 已推送至 `origin/main`；`docs/REINSTALL_PREP.md` 和 README 恢复入口已交付；仓库外快照 `/Users/a399/Desktop/data/godaddy-reinstall-backup-20260929/` 已更新至最终提交并完成 SHA-256 校验。可通过删除快照或 Git 后续提交回滚；删除敏感快照前必须确认外部加密备份存在。
+- 时间逻辑 / Time logic: 本条使用 `Asia/Shanghai`（UTC+08:00）；项目业务时间、DNS TTL、请求超时和重试规则不变。
+- 验证 / Verification: `uv lock --check` → 成功；Django check → no issues；迁移检查 → no changes；`uv run pytest tests -q` → 26 passed；`npm run build --prefix frontend` → Vite 7.3.6 success；`git diff --check` → clean；远程 `main` SHA=`3c6257a4337ce97afffda1e3f4cdea1ca2a6c128`；`shasum -a 256 -c checksums.sha256` → 全部 OK。
+- 利用 / Reuse: 重装后按 `docs/REINSTALL_PREP.md` 克隆仓库、恢复 `.env`/`pat`/SQLite、执行锁定依赖安装和本地检查；Git bundle 提供离线恢复路径。
+- 限制 / Limits: 未执行系统抹除、磁盘擦除、真实 GoDaddy DNS 写入、生产部署或证书变更；`.idea/` 保持未跟踪，不属于公开交付。
+- 下一步 / Next: 将快照目录复制到加密外置存储并确认可读；确认后再进行系统重装。若不需要保留本机运行状态，可仅保留 GitHub 仓库和 `.env.example`。
