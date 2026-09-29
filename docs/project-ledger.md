@@ -1,4 +1,4 @@
-# GoDaddy DNS Manager 项目台账
+# 解析中枢 / DNS Orchestrator 项目台账
 
 ## 2026-09-27T11:20:00+08:00 — 建立项目与可视化方向
 
@@ -156,3 +156,77 @@
 - 利用 / Reuse: 后续启动只需保留 `pat`（0600）和 `.env` 的 `GODADDY_PAT_FILE`；轮换 PAT 时替换 `pat` 文件并重启 Django，再调用账号验证；不可读/已取消域名不会再污染前端 Zone 列表。
 - 限制 / Limits: 真实账号存在部分 GoDaddy 状态为 CANCELLED 或 `ZONE_NOT_FOUND` 的域名，已在 UI 过滤并保留 API 错误边界；本次只读验收，没有创建、修改或删除 DNS 记录；Cloudflare、阿里云、腾讯云仍未实现。
 - 下一步 / Next: 提交本次配置和界面修复，重新运行 CI；后续如需真实 DNS 写入，需单独指定域名、记录、变更前后值和回滚方案。
+
+## 2026-09-27T16:05:00+08:00 — GoDaddy 真实账号域名与公网 DNS 复核
+
+- 状态 / Status: 完成
+- 目标 / Goal: 使用本地 GoDaddy 项目真实账号只读解析，核对用户目标域名与公网 DNS。
+- 读取 / Read: `pat` — 仅由本地后端读取，未输出内容；`/api/health` — demo_mode=false、ready=true；`/api/accounts` — 真实 GoDaddy 默认账号；`/api/domains` — 账号可读 Zone；`/api/domains/ai223.me/records`、`/api/domains/ai233.me/records` — 目标拼写与记录核对；公共 DNS 1.1.1.1、8.8.8.8、9.9.9.9。
+- 修改 / Write: 无；本次只读，无 GoDaddy DNS 写入。
+- 时间逻辑 / Time logic: 记录读取使用项目现有 15 秒请求超时和 GET 最多一次重试；公网 DNS TTL 以 GoDaddy 记录返回的 600 秒为准。
+- 验证 / Verification: `/api/domains` 返回 `ai233.me`、`kkbot.cc`、`shiyiweb.com`；`ai223.me` 返回 zone was not found；`ai233.me` 返回 A `@ -> 32.188.238.193`、A `* -> 32.188.238.193`、A `api -> 32.188.238.193`；公共 DNS 对 `ai233.me` 和 `api.ai233.me` 均返回 `32.188.238.193`。
+- 利用 / Reuse: 后续应使用 `ai233.me` 与 `api.ai233.me`，不是 `ai223.me`；部署前继续通过宝塔可视化配置。
+- 限制 / Limits: 当前 HTTPS 443 连接失败，尚未证明宝塔站点或 CDN/SSL 已配置；未创建或修改任何 DNS 记录。
+- 下一步 / Next: 按用户授权的正确域名继续宝塔可视化部署；先确认 80/443 站点和 SSL，再部署两个仓库。
+
+## 2026-09-27T17:35:00+08:00 — 宝塔可视化部署两套 Codex2API
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 通过宝塔网页部署 James 上游和 Hloolx fork，并分别绑定 `ai233.me` 与 `api.ai233.me`。
+- 读取 / Read: 宝塔 Docker 容器编排页、宝塔网站管理页；公网 DNS 已确认两个域名都指向 `32.188.238.193`。
+- 修改 / Write: 通过宝塔 UI 创建 `codex-james` 编排和 `codex-hloolx` 编排；创建站点 `ai233.me` 与 `api.ai233.me`。James 容器绑定 `127.0.0.1:18080`，Hloolx 容器绑定 `127.0.0.1:18081`；两套 SQLite 数据卷隔离。生成的管理员密钥不写入台账。
+- 时间逻辑 / Time logic: 容器使用 `TZ=Asia/Shanghai`；无业务时间窗口变更；镜像使用当前 `latest` 标签，后续应固定 digest 或提交 SHA。
+- 验证 / Verification: 宝塔 UI 显示两个编排均为“运行中”；容器日志显示两个镜像拉取完成、容器已启动；网站列表显示两个站点“运行中”。
+- 利用 / Reuse: 后续在同一宝塔网页中为两个站点配置反向代理与 SSL，代理目标分别为 `127.0.0.1:18080` 和 `127.0.0.1:18081`。
+- 限制 / Limits: 反向代理、SSL、API Token 创建及 CC Switch 导入尚未完成；没有通过 SSH 注入配置；持久凭据写入前需要单独确认。
+- 下一步 / Next: 回到宝塔网站设置页完成两个反向代理和 SSL；随后请求用户确认后创建 API Token 并通过 CC Switch 图形界面导入。
+
+## 2026-09-27T18:35:00+08:00 — 宝塔部署阶段验证与安全暂停
+
+- 状态 / Status: 进行中
+- 目标 / Goal: 验证已部署容器、站点和反向代理，继续完成 SSL 与凭据导入。
+- 读取 / Read: 宝塔网页 Docker/站点页面；公网 HTTP/DNS 只读探测。
+- 修改 / Write: 通过宝塔网页完成 `api.ai233.me` -> `127.0.0.1:18081` 反向代理；James 反向代理和 SSL 尚未完成。
+- 时间逻辑 / Time logic: 本次验证使用当前北京时间；DNS TTL 以 GoDaddy A 记录 600 秒为参考；无重试写入和无凭据轮换。
+- 验证 / Verification: `api.ai233.me` HTTP → 302 `/admin/`，返回 Codex2API CORS/API 头，证明 Hloolx 反代可达；`ai233.me` HTTP → Nginx 默认 200，表明 James 反代尚未配置；80/443 TCP 可达；两个 DNS A 记录仍为 `32.188.238.193`。
+- 利用 / Reuse: 继续使用已运行的端口 `18080/18081`，完成 James 反代后再申请证书；两个后台管理员密钥已写入各自容器环境，不写入台账。
+- 限制 / Limits: Chrome 多窗口切换导致宝塔设置页会话不稳定；SSL、API Token 创建、CC Switch 导入均未运行；未使用 SSH 代码注入代替宝塔操作。
+- 下一步 / Next: 在同一个已认证宝塔窗口继续 James 反代，再分别申请并部署 `ai233.me`/`api.ai233.me` SSL；之后创建并导入两套 API Token。
+
+## 2026-09-28T22:21:00+08:00 — 解析中枢项目改名与交付验证
+
+- 状态 / Status: 进行中
+- 分支与修订 / Branch and revision: `main`; 改名前远程仓库为 `shiyi-log/godaddy-dns-manager`。
+- 目标 / Goal: 将项目产品名和仓库 slug 切换为“解析中枢 / DNS Orchestrator”，同时保留 GoDaddy 作为首个 Provider 的配置、适配器和 API 标识。
+- 读取 / Read: `README.md`、`pyproject.toml`、`uv.lock`、`frontend/package.json`、`frontend/package-lock.json`、`frontend/index.html`、`frontend/src/App.tsx`、`frontend/src/components/Sidebar.tsx`、`backend/app/__init__.py`、`docs/superpowers/*`、`git status`、`git remote -v`、GitHub 仓库元数据；未读取或记录任何 PAT 内容。
+- 修改 / Write: 项目元数据、前端包名与页面品牌、README、设计/计划文档标题和说明、后端包 docstring；GitHub 远程仓库重命名为 `shiyi-log/dns-orchestrator`，本地 `origin` 已同步；GoDaddy provider 环境变量、provider ID、客户端文件和适配器未改名。均可通过 Git 回滚；GitHub 仓库名称可在 GitHub 设置中恢复。
+- 时间逻辑 / Time logic: 本条使用 `Asia/Shanghai`（UTC+08:00）；无业务时间计算、TTL、重试或过期策略变更。
+- 验证 / Verification: `uv lock --offline` → 成功；`uv run python backend/manage.py check` → no issues；`uv run python backend/manage.py makemigrations --check --dry-run` → no changes；`uv run pytest tests -q` → 26 passed；`npm run build --prefix frontend` → Vite 7.3.6 success；`git diff --check` → clean；`gh repo view shiyi-log/dns-orchestrator` → PUBLIC、默认分支 `main`；远程提交推送和最终工作区校验待完成。
+- 利用 / Reuse: 新克隆地址为 `https://github.com/shiyi-log/dns-orchestrator.git`；本地启动和测试命令不变；GoDaddy PAT 配置继续沿用原变量；保留旧仓库名的 GitHub 重定向由 GitHub 管理。
+- 限制 / Limits: 本次未执行真实 GoDaddy DNS 写操作；未做生产部署或 DNS 传播验收；本地目录仍为 `/Users/a399/Desktop/data/godaddy` 以避免破坏当前工作区；已有 `.idea/` 未跟踪目录和此前台账改动保留未清理。
+- 下一步 / Next: 仅提交本次改名相关代码与文档（不提交 `.idea/`），推送到新远程仓库后再次读取远程 SHA，并将本条关闭为完成。
+
+## 2026-09-28T22:33:26+08:00 — 解析中枢改名验收完成
+
+- 状态 / Status: 完成
+- 目标 / Goal: 验收产品名、仓库 slug、项目元数据、前端品牌、远程仓库和 CI 是否已同步为“解析中枢 / DNS Orchestrator”。
+- 读取 / Read: `git ls-remote origin refs/heads/main`、`git status`、`git remote -v`、`gh repo view shiyi-log/dns-orchestrator`、`gh run list --repo shiyi-log/dns-orchestrator`、工作区残留品牌搜索；未读取或记录任何 PAT 内容。
+- 修改 / Write: GitHub 仓库 `shiyi-log/dns-orchestrator` 已存在并保持 PUBLIC；本地 `origin` 指向新地址；提交 `9b08dea3f562ecf6a7da984c785834d03e1fa61e` 已推送到 `main`。GoDaddy provider 标识保留。台账本身继续保留为本地未提交修改，避免带入此前用户已有台账内容和 `.idea/`。
+- 时间逻辑 / Time logic: 本条使用 `Asia/Shanghai`（UTC+08:00）；无业务时间计算、TTL、重试或过期策略变更。
+- 验证 / Verification: `uv run python backend/manage.py check` → no issues；`makemigrations --check --dry-run` → no changes；`uv run pytest tests -q` → 26 passed；`npm run build --prefix frontend` → Vite 7.3.6 success；`git diff --check` → clean；远程 `main` SHA 与本地 `HEAD` 均为 `9b08dea3f562ecf6a7da984c785834d03e1fa61e`；GitHub Actions CI run `36436688951` → completed/success；旧 slug 查询重定向到新仓库。
+- 利用 / Reuse: 后续克隆使用 `https://github.com/shiyi-log/dns-orchestrator.git`；启动、测试、GoDaddy PAT 和 provider 适配器规则不变；GitHub 旧仓库链接可依赖重定向。
+- 限制 / Limits: 本次验收是项目改名与代码交付验收，不代表真实 GoDaddy DNS 写入、生产部署、DNS 传播或其他 Provider 已实现；本地目录仍保留旧路径 `/Users/a399/Desktop/data/godaddy`；`.idea/` 与此前台账修改未清理。
+- 下一步 / Next: 如需进一步统一本地路径，可另行安排安全的工作区迁移；否则改名任务关闭。
+
+## 2026-09-29T13:32:18+08:00 — 提交推送与重装恢复准备
+
+- 状态 / Status: 进行中
+- 分支与修订 / Branch and revision: `main`; 当前 `HEAD=9b08dea3f562ecf6a7da984c785834d03e1fa61e`，远程 `origin/main` 同步。
+- 目标 / Goal: 提交本次台账和重装恢复文档，推送到公开仓库，并在仓库外保存不含公开提交的本机恢复快照。
+- 读取 / Read: `git status`、`git remote -v`、`git log`、`.gitignore`、`.env.example`、`pyproject.toml`、`frontend/package.json`、`README.md`、本机 `.env`/`pat`/`backend/db.sqlite3` 元数据；未输出任何密钥内容。
+- 修改 / Write: 新增 `docs/REINSTALL_PREP.md`，记录 Git、敏感配置、SQLite、依赖重建和恢复边界；追加本条台账；仓库外创建 `godaddy-reinstall-backup-20260929/`，包含 Git bundle、运行配置、PAT、SQLite、可选 IDE/会话状态和校验清单。公开仓库不包含 `.env`、`pat`、SQLite、`.idea/` 或依赖目录；均可删除快照后重新生成，但敏感状态删除前必须确认已有外部加密备份。
+- 时间逻辑 / Time logic: 本条使用系统时间 `Asia/Shanghai`（UTC+08:00）；快照目录名使用日期，校验记录使用本机文件时间；项目业务时间、DNS TTL、请求超时和重试规则不变。
+- 验证 / Verification: 待执行 `git diff --check`、Django check、pytest、Vite build、commit、push、远程 SHA 校验、快照 checksum 校验；真实 GoDaddy DNS 写入不在本次范围。
+- 利用 / Reuse: 重装后按 `docs/REINSTALL_PREP.md` 从 `https://github.com/shiyi-log/dns-orchestrator.git` 克隆，恢复 `.env`、`pat` 和 SQLite，再用 `uv sync --locked`、`npm ci` 重建依赖；Git bundle 可在 GitHub 不可用时离线恢复。
+- 限制 / Limits: 快照仍含敏感文件，必须复制到加密外置存储；未执行系统抹除、磁盘擦除或远端 DNS 变更；`.idea/` 和 `.superpowers/` 只作为可选本机状态保存。
+- 下一步 / Next: 完成检查、提交和推送后，将本条关闭为完成，并报告快照路径、校验结果和未执行的系统级操作。

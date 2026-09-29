@@ -130,5 +130,6 @@ GitHub Actions 会在 pull request、`main` 分支推送和手动 dispatch 时�
 
 ## 参考
 
+- [重装系统准备与恢复](docs/REINSTALL_PREP.md)
 - [GoDaddy API 文档](https://developer.godaddy.com/en/docs/api-users)
 - [GoDaddy DNS 管理文档](https://developer.godaddy.com/en/docs/api-users/domains/manage/dns)
