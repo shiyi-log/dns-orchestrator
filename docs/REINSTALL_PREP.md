@@ -40,7 +40,7 @@ git ls-remote origin refs/heads/main
 
 请把整个快照目录复制到加密的外置盘或密码管理的安全文件区。不要把它上传到公开仓库或未加密网盘。`runtime/.env`、`runtime/pat` 和 `runtime/backend-db.sqlite3` 应保持仅本人可读。
 
-复制后在快照目录中运行 `shasum -a 256 -c checksums.sha256`；所有文件都应显示 `OK`。再用 `git bundle verify git-repo.bundle` 检查离线 Git 包。
+复制后在快照目录中运行 `shasum -a 256 -c checksums.sha256`；所有文件都应显示 `OK`。在已克隆的项目仓库中运行 `git bundle verify /path/to/godaddy-reinstall-backup-20260929/git-repo.bundle` 检查离线 Git 包（该命令需要 Git 仓库上下文）。
 
 以下目录没有复制，因为它们可以从锁文件重建：`.venv/`、`frontend/node_modules/`、`frontend/dist/`、`.pytest_cache/`。`.env` 中的 `ACCOUNT_ENCRYPTION_KEY` 必须和 SQLite 中已保存账号的加密密钥保持一致；丢失该密钥后，数据库中的已保存 PAT 无法解密。
 
