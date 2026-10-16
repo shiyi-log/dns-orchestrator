@@ -128,6 +128,10 @@ npm run build --prefix frontend
 
 GitHub Actions 会在 pull request、`main` 分支推送和手动 dispatch 时运行同样的后端检查、pytest 和前端构建。CI 使用 `uv.lock` 和 `frontend/package-lock.json` 的锁定依赖，并缓存两套依赖目录。
 
+### 发布流程
+
+`.github/workflows/release.yml` 是 GitHub Release CD 流程。推送符合当前项目版本的标签（例如 `pyproject.toml` 为 `0.1.0` 时使用 `v0.1.0`），或在 GitHub Actions 中手动输入同样的标签后，流程会先复用完整 CI，再构建前端静态文件，并发布包含源码、`frontend/dist` 和 SHA-256 校验文件的 GitHub Release。该流程只负责可审计的 GitHub Release 制品；生产服务器、容器镜像和 DNS 写入不属于当前仓库的发布目标。
+
 ## 参考
 
 - [重装系统准备与恢复](docs/REINSTALL_PREP.md)

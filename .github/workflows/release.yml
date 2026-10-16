@@ -1,0 +1,152 @@
+name: CD Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (must match pyproject.toml, for example v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: CI gate
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  package:
+    name: Build release bundle
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      tag: ${{ steps.release-meta.outputs.tag }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Resolve and validate release tag
+        id: release-meta
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$REF_TYPE" == "tag" ]]; then
+            tag="$REF_NAME"
+          else
+            tag="$INPUT_TAG"
+          fi
+
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR.PATCH: $tag" >&2
+            exit 1
+          fi
+
+          version="$(python3 - <<'PY'
+          import tomllib
+
+          with open("pyproject.toml", "rb") as handle:
+              print(tomllib.load(handle)["project"]["version"])
+          PY
+          )"
+          expected_tag="v$version"
+          if [[ "$tag" != "$expected_tag" ]]; then
+            echo "Release tag $tag does not match pyproject.toml version $version" >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "commit=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Build frontend
+        run: npm run build --prefix frontend
+
+      - name: Create source and frontend bundle
+        id: bundle
+        env:
+          RELEASE_TAG: ${{ steps.release-meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          bundle_root="dns-orchestrator-${RELEASE_TAG}"
+          staging_dir="$(mktemp -d)"
+          mkdir -p "$staging_dir/$bundle_root"
+
+          git archive --format=tar "$GITHUB_SHA" | tar -x -C "$staging_dir/$bundle_root"
+          rm -rf "$staging_dir/$bundle_root/frontend/dist"
+          cp -R frontend/dist "$staging_dir/$bundle_root/frontend/dist"
+          printf 'release_tag=%s\ncommit=%s\n' "$RELEASE_TAG" "$GITHUB_SHA" > "$staging_dir/$bundle_root/RELEASE.txt"
+
+          archive="${bundle_root}.tar.gz"
+          tar --sort=name --mtime="@$(git show -s --format=%ct "$GITHUB_SHA")" \
+            --owner=0 --group=0 --numeric-owner \
+            -czf "$archive" -C "$staging_dir" "$bundle_root"
+          sha256sum "$archive" > "$archive.sha256"
+
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-bundle-${{ steps.release-meta.outputs.tag }}
+          if-no-files-found: error
+          path: |
+            ${{ steps.bundle.outputs.archive }}
+            ${{ steps.bundle.outputs.archive }}.sha256
+
+  publish:
+    name: Publish GitHub Release
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download release bundle
+        uses: actions/download-artifact@v5.0.0
+        with:
+          name: release-bundle-${{ needs.package.outputs.tag }}
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.package.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release already exists: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            "dns-orchestrator-${RELEASE_TAG}.tar.gz" \
+            "dns-orchestrator-${RELEASE_TAG}.tar.gz.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "DNS Orchestrator ${RELEASE_TAG}" \
+            --generate-notes
